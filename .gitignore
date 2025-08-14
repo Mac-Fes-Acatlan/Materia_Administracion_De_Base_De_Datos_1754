@@ -1,7 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 .DS_Store
 development/data/mydata.sqlite
 development/data/backup.sql
 =======
 .DS_Store
 >>>>>>> f6da8f6 (Cambios repositorio terraform)
+=======
+.DS_Store
+development/data/mydata.sqlite
+>>>>>>> 39c8674 (Cambios repositorio terraform)
