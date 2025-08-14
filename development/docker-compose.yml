@@ -1,0 +1,58 @@
+version: '3.7'
+
+services:
+  postgres:
+    image: postgres:10
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "db_acatlan"]
+      interval: 5s
+      retries: 5
+    restart: always
+    networks:
+      - fes-acatlan
+
+  pgloader:
+    image: dimitri/pgloader
+    platform: linux/amd64
+    depends_on:
+      - postgres
+    volumes:
+      - ./data:/data
+    entrypoint:
+      - bash
+      - -c
+      - |
+        echo "Esperando 20 segundos a que Postgres arranque..."
+        sleep 20
+        echo "Ejecutando pgloader."
+        pgloader /data/creacion.load
+    networks:
+      - fes-acatlan
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - fes-acatlan
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - fes-acatlan
+
+networks:
+  fes-acatlan:
+    driver: bridge
