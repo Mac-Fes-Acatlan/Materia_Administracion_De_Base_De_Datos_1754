@@ -1,0 +1,16 @@
+LOAD DATABASE
+     FROM sqlite:///data/mydata.sqlite
+     INTO postgresql://acatlan:1234@postgres:5432/db_acatlan
+
+ WITH
+     create tables,
+     create indexes,
+     reset sequences
+
+ SET
+     work_mem to '16MB',
+     maintenance_work_mem to '512 MB'
+
+ CAST
+     type datetime to timestamptz using zero-dates-to-null,
+     type date to date using zero-dates-to-null;
