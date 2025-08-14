@@ -1,10 +1,6 @@
 LOAD DATABASE
      FROM sqlite:///data/mydata.sqlite
-<<<<<<< HEAD
      INTO postgresql://acatlan:8g4izJPX@postgres:5432/db_acatlan
-=======
-     INTO postgresql://acatlan:1234@postgres:5432/db_acatlan
->>>>>>> f6da8f6 (Cambios repositorio terraform)
 
  WITH
      create tables,
