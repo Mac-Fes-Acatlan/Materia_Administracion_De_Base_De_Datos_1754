@@ -1,3 +1,1 @@
 # Materia_Administracion_De_Base_De_Datos_1754
-
-Amador Dana
