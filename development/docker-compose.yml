@@ -5,13 +5,13 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      POSTGRES_DB: $POSTGRES_DB
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "db_acatlan"]
-      interval: 5s
-      retries: 5
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./tablespaces:/var/lib/postgresql/tablespaces/ts1
+      - ./airflow/script:/docker-entrypoint-initdb.d
+      
     restart: always
     networks:
       - fes-acatlan
@@ -31,6 +31,70 @@ services:
         sleep 20
         echo "Ejecutando pgloader."
         pgloader /data/creacion.load
+    networks:
+      - fes-acatlan
+
+  airflow-init:
+    image: apache/airflow:2.9.1
+    container_name: airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init && \
+        airflow users create \
+          --username ${AIRFLOW_USER} \
+          --password ${AIRFLOW_PASSWORD} \
+          --firstname Castaneda \
+          --lastname Landa \
+          --role Admin \
+          --email 903564@pcpuma.acatlan.unam.mx
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
+    user: "0:0"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    depends_on:
+      - postgres
+    networks:
+      - fes-acatlan
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    restart: always
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - airflow-init
+      - airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+    networks:
+      - fes-acatlan
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    restart: always
+    command: scheduler
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
     networks:
       - fes-acatlan
 
