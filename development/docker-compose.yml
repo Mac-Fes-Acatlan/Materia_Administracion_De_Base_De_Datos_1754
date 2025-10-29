@@ -10,6 +10,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./tablespaces:/var/lib/postgresql/tablespaces/ts1
+      - ./backups/completo:/var/lib/postgresql/backups/completo
+      - ./backups/diferencial:/var/lib/postgresql/backups/diferencial
+      - ./backups/incremental/wal:/var/lib/postgresql/backups/incremental/wal
       - ./airflow/script:/docker-entrypoint-initdb.d
       
     restart: always
@@ -115,6 +118,17 @@ services:
       - "3000:3000"
     networks:
       - fes-acatlan
+
+  pyspark:
+    volumes:
+      - ${PATH_LOCAL_USER}:/home/jovyan
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8888:8888
+    environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
 
 networks:
   fes-acatlan:
