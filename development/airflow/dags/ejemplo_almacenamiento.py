@@ -16,7 +16,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id='postgres_example_dag',
+    dag_id='ejemplo_almacenamiento',
     default_args=default_args,
     description='Ejemplo simple de DAG con PostgresOperator',
     schedule_interval='@daily',  # Corre una vez al día
