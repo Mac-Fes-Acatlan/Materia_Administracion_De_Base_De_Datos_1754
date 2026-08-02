@@ -1,7 +1,7 @@
-
 services:
+
   postgres:
-    image: postgres:10
+    image: postgres:16
     ports:
       - 5432:5432
     environment:
@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./tablespaces:/var/lib/postgresql/tablespaces/ts1
-      - ./airflow/script:/docker-entrypoint-initdb.d
-      
     restart: always
     networks:
       - fes-acatlan
@@ -22,7 +20,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./data:/data
+      - ./database:/data
     entrypoint:
       - bash
       - -c
@@ -30,71 +28,7 @@ services:
         echo "Esperando 20 segundos a que Postgres arranque..."
         sleep 20
         echo "Ejecutando pgloader."
-        pgloader /data/creacion.load
-    networks:
-      - fes-acatlan
-
-  airflow-init:
-    image: apache/airflow:2.9.1
-    container_name: airflow-init
-    entrypoint: /bin/bash
-    command:
-      - -c
-      - |
-        airflow db init && \
-        airflow users create \
-          --username ${AIRFLOW_USER} \
-          --password ${AIRFLOW_PASSWORD} \
-          --firstname Castaneda \
-          --lastname Landa \
-          --role Admin \
-          --email 903564@pcpuma.acatlan.unam.mx
-    environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
-      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
-    user: "0:0"
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    depends_on:
-      - postgres
-    networks:
-      - fes-acatlan
-
-  airflow-webserver:
-    image: apache/airflow:2.9.1
-    restart: always
-    command: webserver
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-      - airflow-init
-      - airflow-scheduler
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
-      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-    networks:
-      - fes-acatlan
-
-  airflow-scheduler:
-    image: apache/airflow:2.9.1
-    restart: always
-    command: scheduler
-    depends_on:
-      - postgres
-      - airflow-init
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${AIRFLOW_USER}:${AIRFLOW_PASSWORD}@postgres:5432/${POSTGRES_DB_AIRFLOW}
-      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_WEBSERVER_SECRET_KEY}
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
+        pgloader ./data/creacion.load
     networks:
       - fes-acatlan
 
@@ -113,6 +47,58 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    networks:
+      - fes-acatlan
+
+  pyspark:
+    volumes:
+      - ${PATH_JUPYTER}:/home/jovyan
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8888:8888
+    environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
+
+  databasus:
+    image: databasus/databasus:latest
+    container_name: databasus
+    restart: unless-stopped
+    ports:
+      - "4005:4005"
+    depends_on:
+      - postgres
+    volumes:
+      - ./databasus-data:/databasus-data
+    networks:
+      - fes-acatlan
+
+  stackport:
+    image: davireis/stackport:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - AWS_ENDPOINT_URL=http://ministack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    restart: unless-stopped
+    depends_on:
+      ministack:
+        condition: service_healthy
+    networks:
+      - fes-acatlan
+
+  ministack:
+    image: ministackorg/ministack:latest
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4566/_ministack/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - fes-acatlan
 
