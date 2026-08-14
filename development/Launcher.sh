@@ -15,6 +15,6 @@ find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf
 #find . | grep -E "(.cache|.config|.ipython|.jupyter|.local$)" | xargs rm -rf
 
 # Docker
-docker-compose down
+docker compose down
 #docker-compose build
 docker compose up

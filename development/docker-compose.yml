@@ -60,6 +60,8 @@ services:
       - 8888:8888
     environment:
       - JUPYTER_TOKEN=${JUPYTER_TOKEN}
+    networks:
+      - fes-acatlan
 
   databasus:
     image: databasus/databasus:latest
