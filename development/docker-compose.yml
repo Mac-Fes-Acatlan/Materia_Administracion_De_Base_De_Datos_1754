@@ -50,19 +50,6 @@ services:
     networks:
       - fes-acatlan
 
-  pyspark:
-    volumes:
-      - ${PATH_JUPYTER}:/home/jovyan
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8888:8888
-    environment:
-      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
-    networks:
-      - fes-acatlan
-
   databasus:
     image: databasus/databasus:latest
     container_name: databasus
@@ -81,7 +68,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - AWS_ENDPOINT_URL=http://ministack:4566
+      - AWS_ENDPOINT_URL=http://xministack:4566
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
@@ -97,10 +84,23 @@ services:
     ports:
       - "4566:4566"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4566/_ministack/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4566/_ministack/health')" ]
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - fes-acatlan
+
+  pyspark:
+    volumes:
+      - ${PATH_JUPYTER}:/home/jovyan
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8888:8888
+    environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN}
     networks:
       - fes-acatlan
 
