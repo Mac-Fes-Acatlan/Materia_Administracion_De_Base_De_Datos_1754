@@ -7,9 +7,11 @@ USER root
 # ============================================================
 
 RUN pip install --no-cache-dir \
-    pandas \
-    matplotlib \
-    sympy
+    psycopg2-binary \ 
+    sqlalchemy \ 
+    pandas \ 
+    neo4j \
+    boto3
 
 # ============================================================
 # Apache Iceberg
