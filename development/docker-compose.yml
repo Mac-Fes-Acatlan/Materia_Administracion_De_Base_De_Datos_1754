@@ -58,17 +58,37 @@ services:
       - "4005:4005"
     depends_on:
       - postgres
+    environment:
+      - ADMIN_NAME=${DATABASUS_NAME}
+      - ADMIN_EMAIL=${DATABASUS_EMAIL}
+      - ADMIN_PASSWORD=${DATABASUS_PASSWORD}
     volumes:
-      - ./databasus-data:/databasus-data
+      - databasus_data:/databasus-data
     networks:
       - fes-acatlan
 
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474" # Interfaz Web (Neo4j Browser HTTP)
+      - "7687:7687" # Protocolo Bolt (Conexión de aplicaciones/drivers)
+    environment:
+      - NEO4J_AUTH=none
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs
+      - ./neo4j/import:/var/lib/neo4j/import
+      - ./neo4j/plugins:/plugins
+    networks:
+      - fes-acatlan
   stackport:
     image: davireis/stackport:latest
     ports:
       - "8080:8080"
     environment:
-      - AWS_ENDPOINT_URL=http://xministack:4566
+      - AWS_ENDPOINT_URL=http://ministack:4566
       - AWS_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
@@ -107,3 +127,6 @@ services:
 networks:
   fes-acatlan:
     driver: bridge
+
+volumes:
+  databasus_data:
