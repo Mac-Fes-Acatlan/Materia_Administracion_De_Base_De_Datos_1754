@@ -1,0 +1,23 @@
+{
+  "etl_name": "order_items_resumen",
+  "env": "local",
+  "postgres": {
+    "url": "jdbc:postgresql://postgres:5432/db_acatlan",
+    "user": "acatlan",
+    "password": "8g4izJPX",
+    "driver": "org.postgresql.Driver"
+  },
+  "sources": {
+    "orders": "public.orders",
+    "order_items": "public.order_items"
+  },
+  "transform": {
+    "order_status": ["delivered", "shipped"]
+  },
+  "iceberg": {
+    "catalog": "local",
+    "namespace": "db_lakehouse",
+    "table": "order_items_staging",
+    "warehouse": "/home/jovyan/notebooks/best_practices/lakehouse"
+  }
+}
